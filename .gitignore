@@ -1,0 +1,7 @@
+# Vercel
+.vercel
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.log
