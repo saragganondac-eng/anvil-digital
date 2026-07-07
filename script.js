@@ -111,8 +111,9 @@
       const valueEl = sel.querySelector(".select__value");
       const hidden = sel.querySelector('input[type="hidden"]');
       const options = Array.from(sel.querySelectorAll(".select__option"));
-      const open = () => { sel.classList.add("is-open"); trigger.setAttribute("aria-expanded", "true"); };
-      const close = () => { sel.classList.remove("is-open"); trigger.setAttribute("aria-expanded", "false"); };
+      const field = sel.closest(".field");
+      const open = () => { sel.classList.add("is-open"); if (field) field.classList.add("select-open"); trigger.setAttribute("aria-expanded", "true"); };
+      const close = () => { sel.classList.remove("is-open"); if (field) field.classList.remove("select-open"); trigger.setAttribute("aria-expanded", "false"); };
 
       trigger.addEventListener("click", (e) => {
         e.stopPropagation();

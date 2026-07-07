@@ -488,7 +488,12 @@ body::before {
 .form { transition: opacity var(--dur-base) var(--ease); }
 .form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 @media (max-width: 520px) { .form__row { grid-template-columns: 1fr; } }
-.field { display: block; margin-bottom: 1rem; }
+.field { display: block; position: relative; margin-bottom: 1rem; }
+/* Lift the field that owns an open dropdown above sibling fields — each field
+   forms its own stacking context (GSAP transforms / will-change), so the panel's
+   own z-index isn't enough on its own. (.select-open is a no-:has fallback.) */
+.form .field:has(.select.is-open),
+.form .field.select-open { z-index: 60; }
 .field__label {
   display: block; font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--ink-mute); margin-bottom: 0.5rem; transform-origin: left center;
@@ -530,7 +535,7 @@ body::before {
 .select__panel {
   position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 20;
   list-style: none; margin: 0; padding: 0.4rem; border-radius: 12px;
-  background: rgba(13,13,20,0.98); border: 1px solid var(--line-2);
+  background: #13131d; border: 1px solid var(--line-2);
   box-shadow: 0 26px 60px -26px rgba(0,0,0,0.85);
   max-height: 260px; overflow-y: auto;
   opacity: 0; transform: translateY(-8px); transform-origin: top center;
