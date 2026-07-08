@@ -668,33 +668,15 @@ html.is-loading { overflow: hidden; }
 .preloader.is-revealing { transform: translateY(-100%); transition: transform var(--dur-slow) var(--ease-power4); }
 
 /* ============================================================
-   NO-VIDEO FALLBACK — small screens (<768px) or slow connections.
-   Videos are removed entirely and replaced with static JPG poster images so
-   nothing heavy is downloaded on mobile data. Applied two ways:
-     • .is-lite class (set by JS: innerWidth < 768 or slow/data-saver link)
-     • @media (max-width: 767px)  — a CSS-only guarantee even if JS never runs
+   POSTER FALLBACKS — each poster JPG sits BEHIND its background video, so a
+   frame shows instantly while the clip loads (and if it ever fails). The video
+   paints over it once playing. Videos now play on every screen using the
+   mobile-optimised sources; nothing is hidden.
    ============================================================ */
-/* JS path — .is-lite set on small screens / slow links */
-html.is-lite .hero__video,
-html.is-lite .how__banner-video,
-html.is-lite .about__visual-video,
-html.is-lite .site-bg__video,
-html.is-lite .site-bg { display: none !important; }
-html.is-lite .hero__media,
-html.is-lite .how__banner,
-html.is-lite .about__visual { background-size: cover; background-position: center; background-repeat: no-repeat; }
-html.is-lite .hero__media   { background-color: #08080c; background-image: url("hero-poster.jpg"); }
-html.is-lite .how__banner   { background-color: #0c0c14; background-image: url("whiteroom-poster.jpg"); }
-html.is-lite .about__visual { background-color: #060609; background-image: url("anvil-poster.jpg"); }
-
-/* CSS-only guarantee for phones even if JS never runs */
-@media (max-width: 767px) {
-  .hero__video, .how__banner-video, .about__visual-video, .site-bg__video, .site-bg { display: none !important; }
-  .hero__media, .how__banner, .about__visual { background-size: cover; background-position: center; background-repeat: no-repeat; }
-  .hero__media   { background-color: #08080c; background-image: url("hero-poster.jpg"); }
-  .how__banner   { background-color: #0c0c14; background-image: url("whiteroom-poster.jpg"); }
-  .about__visual { background-color: #060609; background-image: url("anvil-poster.jpg"); }
-}
+.hero__media, .how__banner, .about__visual { background-size: cover; background-position: center; background-repeat: no-repeat; }
+.hero__media   { background-color: #08080c; background-image: url("hero-poster.jpg"); }
+.how__banner   { background-color: #0c0c14; background-image: url("whiteroom-poster.jpg"); }
+.about__visual { background-color: #060609; background-image: url("anvil-poster.jpg"); }
 
 /* will-change only on layers that transform every scroll frame */
 [data-parallax] { will-change: transform; }

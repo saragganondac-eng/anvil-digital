@@ -14,14 +14,11 @@
   const D = { fast: 0.3, base: 0.6, slow: 1.1 };
 
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  // Videos are too heavy for phones. On screens < 768px (or data-saver / 2g
-  // links) we NEVER load a video — CSS shows a static JPG poster instead.
+  // Videos play on every screen — the <source media="(max-width:768px)"> tags
+  // serve small mobile-optimised files under 768px. `isMobile` only controls the
+  // simplified (no pin/scrub) animation path.
   const isMobile = window.innerWidth < 768;
-  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  const slowConn = !!(conn && (conn.saveData || /(^|-)(slow-2g|2g)$/.test(conn.effectiveType || "")));
-  const isLite = isMobile || slowConn;       // skip videos → static posters
-  if (isLite) document.documentElement.classList.add("is-lite");
-  const simple = isMobile || isLite;         // simplified reveals (no pin/scrub) on phones
+  const simple = isMobile;
 
   /* ---------- year in footer ---------- */
   const yearEl = document.getElementById("year");
@@ -42,12 +39,12 @@
     let heroReadyAt = null, done = false;
     const markReady = () => { if (heroReadyAt == null) heroReadyAt = performance.now(); };
 
-    if (isLite || !hero || !hero.dataset.src) {
+    if (!hero) {
       markReady();
+    } else if (hero.readyState >= 2) {
+      markReady();                                    // first frame already decoded
     } else {
-      if (!hero.src) hero.src = hero.dataset.src;
-      if (hero.readyState >= 2) markReady();
-      else hero.addEventListener("loadeddata", markReady, { once: true });
+      hero.addEventListener("loadeddata", markReady, { once: true }); // wait for it
     }
     const cap = setTimeout(markReady, MAX);
 
@@ -204,28 +201,20 @@
      VIDEO PLAYBACK MANAGER — play only the on-screen clip, lazy-load, retry.
      ============================================================ */
   (function initVideos() {
-    if (isLite) return; // slow connections show static posters instead (CSS)
-
-    // The `autoplay` attribute is removed from the HTML — JS drives playback.
-    // Setting v.muted = true as a PROPERTY (not just the attribute) is what
-    // actually unlocks muted autoplay on iOS Safari; then assign the source and
-    // call .play() inside a try/catch.
+    // Each <video> has autoplay + <source> tags (mobile file under 768px), so the
+    // browser loads/plays on its own. JS just reinforces it: set the muted PROPERTY
+    // (not only the attribute — the real iOS unlock) and retry .play() in a
+    // try/catch, since iOS often defers muted autoplay until a user gesture.
     const play = (v) => {
-      // Guard: only ever set a src / play on desktop-width screens.
-      if (window.innerWidth < 768) return;   // mobile → src stays empty, nothing downloads
       v.muted = true;
       v.playsInline = true;
-      if (!v.src && v.dataset.src) v.src = v.dataset.src;
       try { const p = v.play(); if (p && typeof p.catch === "function") p.catch(function () {}); } catch (e) {}
     };
     const playAll = () => { document.querySelectorAll("video").forEach(play); };
 
-    // Explicit play pass once the DOM is ready.
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", playAll);
     else playAll();
 
-    // iOS often defers muted autoplay until a user gesture — retry on the first
-    // interaction and whenever the tab regains focus.
     ["touchstart", "pointerdown", "keydown"].forEach((ev) =>
       window.addEventListener(ev, playAll, { once: true, passive: true }));
     document.addEventListener("visibilitychange", () => { if (!document.hidden) playAll(); });
@@ -248,9 +237,8 @@
   const siteBgVideo = document.querySelector(".site-bg__video");
   let siteBgLoaded = false;
   function loadSiteBg() {
-    if (siteBgLoaded || !siteBgVideo || isLite) return;
+    if (siteBgLoaded || !siteBgVideo) return;
     siteBgLoaded = true;
-    if (!siteBgVideo.src && siteBgVideo.dataset.src) siteBgVideo.src = siteBgVideo.dataset.src;
     siteBgVideo.muted = true;
     const p = siteBgVideo.play();
     if (p && typeof p.catch === "function") p.catch(function () {});
@@ -355,7 +343,7 @@
           scrollTrigger: { trigger: sec, start: "top 82%", once: true },
         });
       });
-      if (!isLite && siteBgEl) {
+      if (siteBgEl) {
         gsap.fromTo(siteBgEl, { opacity: 0 }, {
           opacity: 1, ease: "none",
           scrollTrigger: { trigger: ".how", start: "top 90%", end: "top 40%", scrub: true, onEnter: loadSiteBg },
