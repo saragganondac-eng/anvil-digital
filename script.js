@@ -15,11 +15,14 @@
 
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const isMobile = window.matchMedia("(max-width: 768px)").matches;
+  // "Lite" (skip videos, show static posters) is now tied ONLY to genuinely
+  // constrained connections — NOT to small screens. That way phones on normal
+  // Wi-Fi/4G/5G (and all iPhones, where the Network Info API is absent) load and
+  // play the videos; only data-saver / 2g users get the lightweight poster fallback.
   const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  const isLite = isMobile ||
-    !!(conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || "")));
+  const isLite = !!(conn && (conn.saveData || /(^|-)(slow-2g|2g)$/.test(conn.effectiveType || "")));
   if (isLite) document.documentElement.classList.add("is-lite");
-  const simple = isMobile || isLite;         // simplified reveals (no pin/scrub)
+  const simple = isMobile || isLite;         // simplified reveals (no pin/scrub) on phones
 
   /* ---------- year in footer ---------- */
   const yearEl = document.getElementById("year");
