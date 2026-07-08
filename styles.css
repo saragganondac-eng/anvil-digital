@@ -44,8 +44,8 @@
 html {
   scroll-behavior: smooth; /* fallback if JS smooth-scroll disabled */
   -webkit-text-size-adjust: 100%;
-  overflow-x: hidden;      /* belt-and-suspenders: no horizontal scroll on mobile */
-  max-width: 100%;
+  /* NOTE: no overflow-x:hidden here — on the root element it breaks iOS
+     momentum/touch scrolling. Horizontal overflow is contained on <body>. */
 }
 /* When Lenis is active it manages scrolling; disable native smooth to avoid conflict */
 html.lenis, html.lenis body { height: auto; }
@@ -644,9 +644,10 @@ body::before {
 /* ============================================================
    PRELOADER — logo draw + counter, then a violet→teal wipe reveals the page
    ============================================================ */
-html.is-loading { overflow: hidden; }
+/* The preloader no longer locks scrolling — it's purely visual and lets
+   touch/scroll pass straight through, so mobile is never "stuck" at the start. */
 .preloader {
-  position: fixed; inset: 0; z-index: 9999; overflow: hidden;
+  position: fixed; inset: 0; z-index: 9999; overflow: hidden; pointer-events: none;
   background: var(--bg); display: grid; place-items: center; will-change: transform;
 }
 .preloader__content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }

@@ -452,12 +452,19 @@
     });
   }
 
-  loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js")
-    .then(() => loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"))
-    .then(() => loadScript("https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"))
-    .then(() => {
-      if (window.gsap && window.ScrollTrigger && window.Lenis) initMotion();
-      else startBasic();
-    })
-    .catch(startBasic);
+  // Initialise scroll animations only AFTER the page has fully loaded, so
+  // ScrollTrigger/Lenis don't compete with initial-load work (smoother first
+  // scroll on mobile). Native scrolling works normally until then.
+  function boot() {
+    loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js")
+      .then(() => loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"))
+      .then(() => loadScript("https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"))
+      .then(() => {
+        if (window.gsap && window.ScrollTrigger && window.Lenis) initMotion();
+        else startBasic();
+      })
+      .catch(startBasic);
+  }
+  if (document.readyState === "complete") boot();
+  else window.addEventListener("load", boot, { once: true });
 })();
