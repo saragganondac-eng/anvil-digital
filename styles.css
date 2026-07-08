@@ -679,6 +679,19 @@ body::before {
 .how__banner   { background-color: #0c0c14; background-image: url("whiteroom-poster.jpg"); }
 .about__visual { background-color: #060609; background-image: url("anvil-poster.jpg"); }
 
+/* Desktop safety net: the hero headline, subheading and CTAs are ALWAYS
+   visible, no matter what the JS/GSAP does. The leaf text elements are forced
+   opacity:1 / visibility:visible / transform:none; the parent .hero__title and
+   .hero__inner are left free so the scroll scrub + release-fade still work. */
+@media (min-width: 768px) {
+  .hero__title .word > span,
+  .hero .eyebrow, .hero__sub, .hero__cta, .hero__meta {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+  }
+}
+
 /* Under 768px: hide the HERO background video only, and show a solid dark
    background instead. Hero text / headline / buttons stay visible. Desktop
    is untouched. */

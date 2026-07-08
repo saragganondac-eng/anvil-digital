@@ -313,19 +313,10 @@
 
     const wordsIn = (sel) => gsap.utils.toArray(sel + " .word > span");
 
-    // ---- HERO intro (after preloader) ----
-    function heroIntro() {
-      const hw = wordsIn(".hero__title");
-      const rest = gsap.utils.toArray(".hero .eyebrow, .hero__sub, .hero__cta, .hero__meta, .hero__scroll");
-      // Safety: whether the intro finishes or gets interrupted, always return the
-      // hero text to its natural (visible) state so it can never stay hidden.
-      const revealSafe = () => gsap.set([].concat(hw, rest), { clearProps: "opacity,transform" });
-      const tl = gsap.timeline({ onComplete: revealSafe, onInterrupt: revealSafe });
-      if (hw.length) tl.from(hw, { yPercent: 115, opacity: 0, duration: D.base, stagger: 0.05 });
-      tl.from(rest, { y: 22, opacity: 0, duration: D.base, stagger: 0.08 }, 0.15);
-    }
-    if (document.documentElement.classList.contains("page-revealed")) heroIntro();
-    else document.addEventListener("preloader:done", heroIntro, { once: true });
+    // ---- HERO text ----
+    // No hide-then-reveal intro: the headline / sub / CTAs are visible from the
+    // start (and forced visible by CSS), so they can never be stranded at
+    // opacity:0. The pin timeline below still provides the hero's scroll motion.
 
     // ---- COUNT-UP tied to scroll progress (all modes) ----
     gsap.utils.toArray(".count").forEach((el) => {
