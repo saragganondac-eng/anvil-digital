@@ -14,13 +14,12 @@
   const D = { fast: 0.3, base: 0.6, slow: 1.1 };
 
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const isMobile = window.matchMedia("(max-width: 768px)").matches;
-  // "Lite" (skip videos, show static posters) is now tied ONLY to genuinely
-  // constrained connections — NOT to small screens. That way phones on normal
-  // Wi-Fi/4G/5G (and all iPhones, where the Network Info API is absent) load and
-  // play the videos; only data-saver / 2g users get the lightweight poster fallback.
+  // Videos are too heavy for phones. On screens < 768px (or data-saver / 2g
+  // links) we NEVER load a video — CSS shows a static JPG poster instead.
+  const isMobile = window.innerWidth < 768;
   const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  const isLite = !!(conn && (conn.saveData || /(^|-)(slow-2g|2g)$/.test(conn.effectiveType || "")));
+  const slowConn = !!(conn && (conn.saveData || /(^|-)(slow-2g|2g)$/.test(conn.effectiveType || "")));
+  const isLite = isMobile || slowConn;       // skip videos → static posters
   if (isLite) document.documentElement.classList.add("is-lite");
   const simple = isMobile || isLite;         // simplified reveals (no pin/scrub) on phones
 
@@ -212,6 +211,8 @@
     // actually unlocks muted autoplay on iOS Safari; then assign the source and
     // call .play() inside a try/catch.
     const play = (v) => {
+      // Guard: only ever set a src / play on desktop-width screens.
+      if (window.innerWidth < 768) return;   // mobile → src stays empty, nothing downloads
       v.muted = true;
       v.playsInline = true;
       if (!v.src && v.dataset.src) v.src = v.dataset.src;
