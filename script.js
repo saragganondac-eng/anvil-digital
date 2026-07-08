@@ -205,31 +205,39 @@
      VIDEO PLAYBACK MANAGER — play only the on-screen clip, lazy-load, retry.
      ============================================================ */
   (function initVideos() {
-    if (isLite) return; // lite mode shows static gradient posters instead (CSS)
-    const ensureSrc = (v) => { if (!v.src && v.dataset.src) v.src = v.dataset.src; };
-    const tryPlay = (v) => { ensureSrc(v); const p = v.play(); if (p && p.catch) p.catch(function () {}); };
+    if (isLite) return; // slow connections show static posters instead (CSS)
+
+    // The `autoplay` attribute is removed from the HTML — JS drives playback.
+    // Setting v.muted = true as a PROPERTY (not just the attribute) is what
+    // actually unlocks muted autoplay on iOS Safari; then assign the source and
+    // call .play() inside a try/catch.
+    const play = (v) => {
+      v.muted = true;
+      v.playsInline = true;
+      if (!v.src && v.dataset.src) v.src = v.dataset.src;
+      try { const p = v.play(); if (p && typeof p.catch === "function") p.catch(function () {}); } catch (e) {}
+    };
+    const playAll = () => { document.querySelectorAll("video").forEach(play); };
+
+    // Explicit play pass once the DOM is ready.
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", playAll);
+    else playAll();
+
+    // iOS often defers muted autoplay until a user gesture — retry on the first
+    // interaction and whenever the tab regains focus.
+    ["touchstart", "pointerdown", "keydown"].forEach((ev) =>
+      window.addEventListener(ev, playAll, { once: true, passive: true }));
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) playAll(); });
+
+    // Keep decoder use low: pause section videos that scroll off-screen, resume on return.
     const sectionVids = Array.from(document.querySelectorAll("video"))
       .filter((v) => !v.classList.contains("site-bg__video"));
-    if (!sectionVids.length) return;
-
-    const hero = document.querySelector(".hero__video");
-    if (hero) ensureSrc(hero);
-
-    const inView = (v) => { const r = v.getBoundingClientRect(); return r.bottom > 0 && r.top < window.innerHeight; };
-    const kick = () => sectionVids.forEach((v) => { if (inView(v)) tryPlay(v); });
-
     if ("IntersectionObserver" in window) {
       const io = new IntersectionObserver((entries) => {
-        entries.forEach((en) => { en.isIntersecting ? tryPlay(en.target) : en.target.pause(); });
+        entries.forEach((en) => { en.isIntersecting ? play(en.target) : en.target.pause(); });
       }, { threshold: 0.1 });
       sectionVids.forEach((v) => io.observe(v));
-    } else {
-      sectionVids.forEach(tryPlay);
     }
-    kick();
-    ["pointerdown", "touchstart", "keydown"].forEach((ev) =>
-      window.addEventListener(ev, kick, { once: true, passive: true }));
-    document.addEventListener("visibilitychange", () => { if (!document.hidden) kick(); });
   })();
 
   /* ============================================================
@@ -241,7 +249,8 @@
   function loadSiteBg() {
     if (siteBgLoaded || !siteBgVideo || isLite) return;
     siteBgLoaded = true;
-    siteBgVideo.src = siteBgVideo.dataset.src || "site-bg.mp4";
+    if (!siteBgVideo.src && siteBgVideo.dataset.src) siteBgVideo.src = siteBgVideo.dataset.src;
+    siteBgVideo.muted = true;
     const p = siteBgVideo.play();
     if (p && typeof p.catch === "function") p.catch(function () {});
   }
