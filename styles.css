@@ -734,6 +734,19 @@ body::before {
 }
 
 /* ============================================================
+   MOBILE PERFORMANCE — under 768px, kill every transition/animation and reset
+   will-change so nothing composites or repaints on scroll. (JS also skips GSAP
+   entirely below 768px.) Desktop is untouched.
+   ============================================================ */
+@media (max-width: 767px) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+    will-change: auto !important;
+  }
+}
+
+/* ============================================================
    REDUCED MOTION
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {

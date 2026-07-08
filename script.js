@@ -31,6 +31,14 @@
   (function initPreloader() {
     const pre = document.getElementById("preloader");
     if (!pre) return;
+    // Mobile: no animated intro and no requestAnimationFrame loop — reveal the
+    // page immediately (content is visible by default; keeps mobile light).
+    if (window.innerWidth < 768) {
+      document.documentElement.classList.remove("is-loading");
+      document.documentElement.classList.add("page-revealed");
+      if (pre.parentNode) pre.parentNode.removeChild(pre);
+      return;
+    }
     const numEl = document.getElementById("pl-num");
     const path = pre.querySelector(".preloader__logo path");
     const hero = document.querySelector(".hero__video");
@@ -307,11 +315,14 @@
 
     // ---- HERO intro (after preloader) ----
     function heroIntro() {
-      const tl = gsap.timeline();
       const hw = wordsIn(".hero__title");
+      const rest = gsap.utils.toArray(".hero .eyebrow, .hero__sub, .hero__cta, .hero__meta, .hero__scroll");
+      // Safety: whether the intro finishes or gets interrupted, always return the
+      // hero text to its natural (visible) state so it can never stay hidden.
+      const revealSafe = () => gsap.set([].concat(hw, rest), { clearProps: "opacity,transform" });
+      const tl = gsap.timeline({ onComplete: revealSafe, onInterrupt: revealSafe });
       if (hw.length) tl.from(hw, { yPercent: 115, opacity: 0, duration: D.base, stagger: 0.05 });
-      tl.from(".hero .eyebrow, .hero__sub, .hero__cta, .hero__meta, .hero__scroll",
-        { y: 22, opacity: 0, duration: D.base, stagger: 0.08 }, 0.15);
+      tl.from(rest, { y: 22, opacity: 0, duration: D.base, stagger: 0.08 }, 0.15);
     }
     if (document.documentElement.classList.contains("page-revealed")) heroIntro();
     else document.addEventListener("preloader:done", heroIntro, { once: true });
@@ -438,9 +449,15 @@
   }
 
   /* ============================================================
-     BOOT — reduced-motion uses the basic fallback; otherwise load the
-     GSAP stack (gsap → ScrollTrigger → Lenis) then wire up the motion.
+     BOOT
+     - MOBILE (< 768px): load NOTHING. No GSAP, no ScrollTrigger, no Lenis, no
+       scroll listeners, no rAF loop. Content is visible by default and count
+       numbers already hold their final values in the HTML, so everything just
+       shows, statically. This is the mobile performance path.
+     - Reduced motion (desktop): the basic fallback (progress bar + nav only).
+     - DESKTOP: load the GSAP stack immediately and wire up the motion.
      ============================================================ */
+  if (window.innerWidth < 768) return;          // mobile → no animation engine at all
   if (prefersReduced) { startBasic(); return; }
 
   function loadScript(src) {
@@ -452,19 +469,12 @@
     });
   }
 
-  // Initialise scroll animations only AFTER the page has fully loaded, so
-  // ScrollTrigger/Lenis don't compete with initial-load work (smoother first
-  // scroll on mobile). Native scrolling works normally until then.
-  function boot() {
-    loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js")
-      .then(() => loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"))
-      .then(() => loadScript("https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"))
-      .then(() => {
-        if (window.gsap && window.ScrollTrigger && window.Lenis) initMotion();
-        else startBasic();
-      })
-      .catch(startBasic);
-  }
-  if (document.readyState === "complete") boot();
-  else window.addEventListener("load", boot, { once: true });
+  loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js")
+    .then(() => loadScript("https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"))
+    .then(() => loadScript("https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"))
+    .then(() => {
+      if (window.gsap && window.ScrollTrigger && window.Lenis) initMotion();
+      else startBasic();
+    })
+    .catch(startBasic);
 })();
