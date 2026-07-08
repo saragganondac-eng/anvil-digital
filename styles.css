@@ -678,6 +678,14 @@ html.is-loading { overflow: hidden; }
 .how__banner   { background-color: #0c0c14; background-image: url("whiteroom-poster.jpg"); }
 .about__visual { background-color: #060609; background-image: url("anvil-poster.jpg"); }
 
+/* Under 768px: hide the HERO background video only, and show a solid dark
+   background instead. Hero text / headline / buttons stay visible. Desktop
+   is untouched. */
+@media (max-width: 767px) {
+  .hero__video { display: none; }
+  .hero__media { background: var(--bg); }
+}
+
 /* will-change only on layers that transform every scroll frame */
 [data-parallax] { will-change: transform; }
 
